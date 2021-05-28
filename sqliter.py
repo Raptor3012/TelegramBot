@@ -9,16 +9,18 @@ class SQLiter:
         self.cursor = self.connection.cursor()
 
     def fill_base(self, csv_file):
+        """Открываем заранее сохраненный csv и заполняем базу"""
         with open(csv_file, newline='', encoding="utf-8") as csvfile:
             reader = csv.reader(csvfile, delimiter=';', quotechar='|')
             for row in reader:
+                """Костыль :)"""
                 if 'Челябинск' not in row:
                     continue
-                print(row[0])
-                self.cursor.re
-
-    def input_or_update_data(self, row):
-
+                # print(row)
+                self.cursor.execute("""INSERT OR REPLACE INTO FlatInfo (region,city,district,mikrodistrict,street,building,area,flor,num_of_rooms,price,url,picture)\
+                                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",\
+                                    (row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11]))
+            self.connection.commit()
 
     def close(self):
         """Закрываем соединение с БД"""

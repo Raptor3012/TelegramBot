@@ -24,7 +24,12 @@ async def start_command(message: types.Message):
 
 @dp.message_handler(commands=["update_base"])
 async def start_command(message: types.Message):
-    SQLiter.fill_base(csv_file='.//data/flats.csv')
+    db.fill_base(csv_file='.//data/flats.csv')
+    await message.answer('Привет')
+
+@dp.message_handler(commands=["find"])
+async def start_command(message: types.Message):
+    db.fill_base(csv_file='.//data/flats.csv')
     await message.answer('Привет')
 
 @dp.message_handler()
