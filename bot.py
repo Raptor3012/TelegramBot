@@ -4,6 +4,7 @@ import logging
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import InputMediaPhoto, InputTextMessageContent
 from aiogram.utils.markdown import text
+from sqliter import SQLiter
 
 #Задаем уровень логов
 logging.basicConfig(level=logging.INFO)
@@ -12,11 +13,19 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=config.API_TOKEN)
 dp = Dispatcher(bot)
 
+# Инициализируем соединение с БД
+db = SQLiter('.//data/dbFlat.db')
+
 # Эхо метод
 @dp.message_handler(commands=["start"])
 async def start_command(message: types.Message):
     answer = text('Привет, я помогу найти тебе квартиру на основе введёной информации', sep='\n')
     await message.answer(answer)
+
+@dp.message_handler(commands=["update_base"])
+async def start_command(message: types.Message):
+    SQLiter.fill_base(csv_file='.//data/flats.csv')
+    await message.answer('Привет')
 
 @dp.message_handler()
 async def echo(message: types.Message):
