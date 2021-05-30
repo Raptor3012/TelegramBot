@@ -27,13 +27,14 @@ class SQLiter:
 
         sql = "SELECT region,city,district,mikrodistrict,street,building,area,flor,num_of_rooms,price,url,picture \
                 FROM FlatInfo" \
-              " WHERE price>=? and price<=? and replace(district,' ','')=? and num_of_rooms=? and flor=?"
-        self.cursor.execute(sql, (arguments[0],arguments[1],arguments[2],arguments[3],arguments[4]))
+              " WHERE price>=? and price<=? and district=? and num_of_rooms=? and flor=?"
+        self.cursor.execute(sql, (arguments['min_price'],arguments['max_price'],arguments['district'],arguments['rooms'],arguments['flor']))
 
         rows = self.cursor.fetchall()
 
         for row in rows:
             print(row)
+        return rows
 
     def close(self):
         """Закрываем соединение с БД"""

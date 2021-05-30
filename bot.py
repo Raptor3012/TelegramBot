@@ -3,77 +3,119 @@ import logging
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import InputMediaPhoto, InputTextMessageContent
+from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
 from aiogram.utils.markdown import text
 from sqliter import SQLiter
+
+class States(StatesGroup):
+    """
+    class for set up state user
+    """
+    min = State()
+    max = State()
+    district = State()
+    rooms = State()
+    flor = State()
+    finish = State()
 
 #Задаем уровень логов
 logging.basicConfig(level=logging.INFO)
 
 # Инициализируем бота
 bot = Bot(token=config.API_TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher(bot, storage=MemoryStorage())
 
 # Инициализируем соединение с БД
 db = SQLiter(config.PATH_BASE)
 
 # Обработка комманды /start
-@dp.message_handler(commands=["start"])
+# @dp.message_handler(commands=["start"])
+# async def start_command(message: types.Message):
+#     await States.start.set()
+#     answer = text('Привет, я помогу найти тебе квартиру для аренды на основе введёной информации',\
+#              "Для этого воспользуйся командой /find [Мин. цена],[Макс. цена],[Район],[Кол-во комнат],[этаж]",\
+#              "Например: /find 5000,12000,р-н Калининский,2-комн.,3",     sep='\n')
+#     await message.answer(answer)
+
+@dp.message_handler(commands=["start"], state="*")
 async def start_command(message: types.Message):
     answer = text('Привет, я помогу найти тебе квартиру для аренды на основе введёной информации',\
-             "Для этого воспользуйся командой /find [Мин. цена],[Макс. цена],[Район],[Кол-во комнат],[этаж]",\
-             "Например: /find 5000,12000,р-н Калининский,2-комн.,3",     sep='\n')
+                "Параметры по которым ведётся поиск: Мин. цена, Макс. цена, Район, Кол-во комнат, Этаж",\
+                "Давайте начнем. \nВведите начальную стоимость аренды. Например: 5000",   sep='\n')
     await message.answer(answer)
+    await States.min.set()
 
 # Обработка комманды /help
-@dp.message_handler(commands=["help"])
-async def start_command(message: types.Message):
-    answer = text("Для того чтобы найти квартиру воспользуйся командой /find [Мин. цена],[Макс. цена],[Район],[Кол-во комнат],[этаж]",\
-             "Например: /find 5000,12000,р-н Калининский,2-комн.,3",     sep='\n')
+@dp.message_handler(commands=["help"], state="*")
+async def help_command(message: types.Message):
+    answer = text("Для того чтобы найти квартиру воспользуйся командой /find ",
+                  "Параметры по которым ведётся поиск: Мин. цена, Макс. цена, Район, Кол-во комнат, Этаж", sep='\n')
     await message.answer(answer)
 
 # Обновление базы из заранее созданного csv файла
 @dp.message_handler(commands=["update_base"])
-async def start_command(message: types.Message):
+async def update_base_command(message: types.Message):
     db.fill_base(csv_file=config.PATH_CSV)
     await message.answer('Ок')
 
-@dp.message_handler(commands=["find"])
-async def start_command(message: types.Message):
-    arguments = message.get_args()
-    if not arguments:
-        return await message.reply("Что-то пошло не так")
+@dp.message_handler(commands=["find"], state="*")
+async def find_command(message: types.Message):
+    answer = text("Введите начальную стоимость аренды. Например: 5000", sep='\n')
+    await message.answer(answer)
+    await States.min.set()
 
-    arguments = arguments.replace(' ', '')
-    arguments = arguments.split(',')
+@dp.message_handler(state=States.min)
+async def min_command(message: types.Message, state:FSMContext):
+    await state.update_data(min_price=message.text)
+    await States.next()
+    await message.answer("Введите максимальную стоимость аренды. Например: 12000")
 
-    db.find_in_base(arguments)
+@dp.message_handler(state=States.max)
+async def max_command(message: types.Message, state:FSMContext):
+    await state.update_data(max_price=message.text)
+    await States.next()
+    await message.answer("Введите Район. Например: р-н Калининский")
+
+@dp.message_handler(state=States.district)
+async def district_command(message: types.Message, state:FSMContext):
+    await state.update_data(district=message.text)
+    await States.next()
+    await message.answer("Введите кол-во комнат. Например: 2-комн.")
+
+@dp.message_handler(state=States.rooms)
+async def rooms_command(message: types.Message, state:FSMContext):
+    await state.update_data(rooms=message.text)
+    await States.next()
+    await message.answer("Введите этаж. Например: 3")
+
+@dp.message_handler(state=States.flor)
+async def flor_command(message: types.Message, state:FSMContext):
+    await state.update_data(flor=message.text)
+    await States.next()
+    user_data = await state.get_data()
+
+    result = db.find_in_base(user_data)
+    media = []
+    for flat in result:
+        media.append(InputMediaPhoto(flat[11],text(f"{flat[0]}, {flat[1]}, {flat[2]}, {flat[3]}, {flat[4]}, дом {flat[5]}, площадь {flat[6]},"
+                                                   f"Этаж {flat[7]}, Тип квартиры {flat[8]}, Цена {flat[9]} в месяц, {flat[10]}")))
+        await bot.send_media_group(message.from_user.id, media)
 
 
-    await message.answer("Пук")
-
-
-
-
-
-
+@dp.message_handler(state=States.finish)
+async def finish_command(message: types.Message):
+    await message.answer("Если хотите начать новый поиск напишите команду /find")
 
 @dp.message_handler()
 async def echo(message: types.Message):
     await message.reply('Незнаю что с этим делать попробуй воспользоваться коммандами /start или /help')
 
 
-# @dp.message_handler()
-# async def echo(message: types.Message):
-#
-#     answer = text('Привет, я помогу найти тебе квартиру на основе введёной информации', sep='\n')
-#     photo = ["https://cdn-p.cian.site/images/40/455/601/1065540484-1.jpg",
-#              "https://cdn-p.cian.site/images/55/670/501/solnechnyy-chelyabinsk-jk-floor-plan-1050765569-6.jpg",
-#              "https://cdn-p.cian.site/images/40/455/601/1065540497-1.jpg"]
-#     media = []
-#     for item in photo:
-#         media.append(InputMediaPhoto(item))
-#     await bot.send_message(message.from_user.id, answer)
-#     await bot.send_media_group(message.from_user.id, media)
+
+
 
 if __name__ == "__main__":
+
     executor.start_polling(dp, skip_updates=True)
