@@ -73,7 +73,7 @@ async def min_command(message: types.Message, state: FSMContext):
 
     await state.update_data(min_price=message.text)
     await States.next()
-    await message.answer("Введите максимальную стоимость аренды. Например: 12000")
+    await message.answer("Введите максимальную стоимость аренды. Например: 20000")
 
 
 @dp.message_handler(state=States.max)
@@ -91,14 +91,14 @@ async def max_command(message: types.Message, state: FSMContext):
 async def district_command(message: types.Message, state: FSMContext):
     await state.update_data(district=message.text)
     await States.next()
-    await message.answer("Введите кол-во комнат. Например: 2")
+    await message.answer("Введите кол-во комнат. Например: 1")
 
 
 @dp.message_handler(state=States.rooms)
 async def rooms_command(message: types.Message, state: FSMContext):
     await state.update_data(rooms=message.text)
     await States.next()
-    await message.answer("Введите этаж. Например: 3")
+    await message.answer("Введите этаж. Например: 4")
 
 
 @dp.message_handler(state=States.flor)

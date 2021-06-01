@@ -23,11 +23,19 @@ class SQLiter:
             self.connection.commit()
 
     def find_in_base(self, arguments):
-
-        sql = "SELECT city,district,mikrodistrict,street,building,area,flor,num_of_rooms,price,url,picture \
-                FROM FlatInfo" \
-              " WHERE price>=? and price<=? and district=? and num_of_rooms=? and flor=?"
-        self.cursor.execute(sql, (arguments['min_price'],arguments['max_price'],arguments['district'],arguments['rooms'],arguments['flor']))
+        if arguments['rooms'] > "3":
+            sql = "SELECT city,district,mikrodistrict,street,building,area,flor,num_of_rooms,price,url,picture \
+                                FROM FlatInfo" \
+                  " WHERE price>=? and price<=? and district=? and num_of_rooms='Более 3-к' and flor=?"
+            self.cursor.execute(sql, (
+            arguments['min_price'], arguments['max_price'], arguments['district'], arguments['flor']))
+        else:
+            sql = "SELECT city,district,mikrodistrict,street,building,area,flor,num_of_rooms,price,url,picture \
+                    FROM FlatInfo" \
+                  " WHERE price>=? and price<=? and district=? and num_of_rooms=? and flor=?"
+            self.cursor.execute(sql, (
+                arguments['min_price'],arguments['max_price'],arguments['district'],arguments['rooms'],
+                arguments['flor']))
 
         rows = self.cursor.fetchall()
 
