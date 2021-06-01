@@ -7,6 +7,7 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.markdown import text
+from asyncio import sleep
 from sqliter import SQLiter
 
 
@@ -83,14 +84,14 @@ async def max_command(message: types.Message, state: FSMContext):
 
     await state.update_data(max_price=message.text)
     await States.next()
-    await message.answer("Введите Район. Например: р-н Калининский")
+    await message.answer("Введите Район. Например: Калининский")
 
 
 @dp.message_handler(state=States.district)
 async def district_command(message: types.Message, state: FSMContext):
     await state.update_data(district=message.text)
     await States.next()
-    await message.answer("Введите кол-во комнат. Например: 2-комн.")
+    await message.answer("Введите кол-во комнат. Например: 2")
 
 
 @dp.message_handler(state=States.rooms)
@@ -115,17 +116,19 @@ async def flor_command(message: types.Message, state: FSMContext):
         await States.next()
         return
 
-    media = []
     for flat in result:
         if flat[10] == '':
             await message.answer(text(f"{flat[0]}, {flat[1]}, {flat[2]}, {flat[3]}, дом {flat[4]}, площадь {flat[5]},"
                                       f"Этаж {flat[6]}, Тип квартиры {flat[7]}, Цена {flat[8]} в месяц, {flat[9]}"))
+            await sleep(1)
 
         else:
+            media = []
             media.append(InputMediaPhoto(flat[10], text(
                 f"{flat[0]}, {flat[1]}, {flat[2]}, {flat[3]}, дом {flat[4]}, площадь {flat[5]},"
                 f"Этаж {flat[6]}, Тип квартиры {flat[7]}, Цена {flat[8]} в месяц, {flat[9]}")))
             await bot.send_media_group(message.from_user.id, media)
+            await sleep(1)
     await States.next()
 
 
