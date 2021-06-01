@@ -17,15 +17,14 @@ class SQLiter:
                 if 'Челябинск' not in row:
                     continue
                 # print(row)
-                self.cursor.execute("""INSERT OR REPLACE into FlatInfo (region,city,district,mikrodistrict,street,building,area,flor,num_of_rooms,price,url,picture)\
-                                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",\
-                                    (row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11]))
-                self.cursor.execute("""Select price into FlatInfo""")
+                self.cursor.execute("""INSERT OR REPLACE into FlatInfo (city,district,mikrodistrict,street,building,area,flor,num_of_rooms,price,url,picture)\
+                                    VALUES (?,?,?,?,?,?,?,?,?,?,?)""",\
+                                    (row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10]))
             self.connection.commit()
 
     def find_in_base(self, arguments):
 
-        sql = "SELECT region,city,district,mikrodistrict,street,building,area,flor,num_of_rooms,price,url,picture \
+        sql = "SELECT city,district,mikrodistrict,street,building,area,flor,num_of_rooms,price,url,picture \
                 FROM FlatInfo" \
               " WHERE price>=? and price<=? and district=? and num_of_rooms=? and flor=?"
         self.cursor.execute(sql, (arguments['min_price'],arguments['max_price'],arguments['district'],arguments['rooms'],arguments['flor']))
